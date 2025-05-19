@@ -1,9 +1,12 @@
-import Image from "next/image";
+import { getAntwerpStations } from "./lib/velo";
 
-export default function Home() {
+
+export default async function Home() {
+  const stations = await getAntwerpStations();
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-blue-500">
-      <h1 className="text-white text-3xl font-bold">Tailwind werkt!</h1>
+    <div>
+      <h1>Antwerp Velo stations: {stations.length}</h1>
     </div>
   );
 }
