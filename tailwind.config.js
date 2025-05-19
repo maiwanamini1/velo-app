@@ -1,3 +1,4 @@
+// tailwind.config.js
 module.exports = {
   content: [
     "./src/app/**/*.{js,ts,jsx,tsx}",
@@ -5,7 +6,11 @@ module.exports = {
     "./src/pages/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
-    extend: {},
-  },
+    extend: {
+      fontFamily: {
+        tt: ['"TT Commons"', 'sans-serif'],
+      },
+    },
+  }, // <-- deze komma mag NIET vergeten worden!
   plugins: [],
 }
