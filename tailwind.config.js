@@ -10,6 +10,15 @@ module.exports = {
       fontFamily: {
         tt: ['"TT Commons"', 'sans-serif'],
       },
+      animation: {
+        fade: 'fade 0.18s ease-in',
+      },
+      keyframes: {
+        fade: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+      },
     },
   }, // <-- deze komma mag NIET vergeten worden!
   plugins: [],

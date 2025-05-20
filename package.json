@@ -10,11 +10,11 @@
   },
   "dependencies": {
     "@iconify/react": "^6.0.0",
-    "@react-spring/web": "^10.0.0",
     "framer-motion": "^12.12.1",
     "next": "15.3.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-spring": "^10.0.0",
     "react-tinder-card": "^1.6.4"
   },
   "devDependencies": {
