@@ -27,7 +27,6 @@ function getBearing(lat1, lon1, lat2, lon2) {
   return (brng + 360) % 360;
 }
 
-// Je echte page component
 function NavigateContent() {
   const params = useSearchParams();
   const router = useRouter();
@@ -43,7 +42,7 @@ function NavigateContent() {
   const distanceRef = useRef(null);
   const [distanceWidth, setDistanceWidth] = useState(0);
 
-  // Geolocatie en bearing
+  // Locatie & bearing naar het station
   useEffect(() => {
     const watch = navigator.geolocation.watchPosition(
       (pos) => {
@@ -57,39 +56,45 @@ function NavigateContent() {
     return () => navigator.geolocation.clearWatch(watch);
   }, [destLat, destLng]);
 
-  // DeviceOrientation ophalen
+  // Device orientation ophalen
   useEffect(() => {
-    function handleOrientation(event) {
+    function handleOrientation(e) {
       let heading;
-      if (typeof event.webkitCompassHeading !== "undefined") {
-        // iOS
-        heading = event.webkitCompassHeading;
+      // iOS (webkitCompassHeading), anders standaard alpha (Chrome/Android)
+      if (e.webkitCompassHeading != null) {
+        heading = e.webkitCompassHeading; // iOS, 0 = North
+      } else if (e.alpha != null) {
+        // e.alpha = 0 als device naar north wijst (webstandaard)
+        // Maar deze waarde is afhankelijk van device & browser (soms 0 = east)
+        heading = 360 - e.alpha; // Chrome/Android fix
       } else {
-        // Android/Chrome
-        heading = event.alpha;
+        heading = 0;
       }
-      setDeviceHeading(heading ?? 0);
+      setDeviceHeading(heading);
     }
     window.addEventListener("deviceorientationabsolute", handleOrientation, true);
     window.addEventListener("deviceorientation", handleOrientation, true);
 
     return () => {
-      window.removeEventListener("deviceorientationabsolute", handleOrientation, true);
-      window.removeEventListener("deviceorientation", handleOrientation, true);
+      window.removeEventListener("deviceorientationabsolute", handleOrientation);
+      window.removeEventListener("deviceorientation", handleOrientation);
     };
   }, []);
 
-  // Breedte oranje lijn updaten
+  // Breedte van afstandstekst na update
   useEffect(() => {
     if (distanceRef.current) {
       setDistanceWidth(distanceRef.current.offsetWidth);
     }
   }, [distance]);
 
-  const streetViewUrl = `https://maps.googleapis.com/maps/api/streetview?size=400x400&location=${destLat},${destLng}&key=${process.env.NEXT_PUBLIC_STREETVIEW_API_KEY}`;
+  // Bepaal rotatie van pijl (bearing t.o.v. toestel-heading)
+  let arrowRotation = 0;
+  if (bearing !== null && deviceHeading !== null) {
+    arrowRotation = (bearing - deviceHeading + 360) % 360;
+  }
 
-  // Rotatie voor de pijl: verschil tussen bearing en device heading
-  const arrowRotation = ((bearing ?? 0) - (deviceHeading ?? 0) + 360) % 360;
+  const streetViewUrl = `https://maps.googleapis.com/maps/api/streetview?size=400x400&location=${destLat},${destLng}&key=${process.env.NEXT_PUBLIC_STREETVIEW_API_KEY}`;
 
   return (
     <div className="min-h-screen bg-[#CF0039] flex flex-col items-center relative pt-0 px-6">
@@ -153,11 +158,15 @@ function NavigateContent() {
         </div>
         <div className="text-white text-base mt-4 font-medium">Loop in de richting van de pijl</div>
       </div>
+      <div className="text-white text-xs mt-6 opacity-60">
+        {bearing !== null && deviceHeading !== null && (
+          <>Kompas: {Math.round(deviceHeading)}°, Bearing: {Math.round(bearing)}°</>
+        )}
+      </div>
     </div>
   );
 }
 
-// Gebruik Suspense rond je content!
 export default function NavigatePage() {
   return (
     <Suspense fallback={<div className="text-center text-white p-12">Laden…</div>}>
