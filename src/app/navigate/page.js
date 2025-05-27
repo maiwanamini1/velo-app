@@ -1,10 +1,11 @@
 "use client";
 export const dynamic = "force-dynamic";
 
+import { Suspense, useEffect, useState, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useEffect, useState, useRef } from "react";
 import { Icon } from "@iconify/react";
 
+// Helpers
 function toRad(deg) { return deg * Math.PI / 180; }
 function toDeg(rad) { return rad * 180 / Math.PI; }
 function getDistance(lat1, lon1, lat2, lon2) {
@@ -26,7 +27,8 @@ function getBearing(lat1, lon1, lat2, lon2) {
   return (brng + 360) % 360;
 }
 
-export default function Navigate() {
+// Je echte page component
+function NavigateContent() {
   const params = useSearchParams();
   const router = useRouter();
   const destLat = parseFloat(params.get("lat"));
@@ -125,5 +127,14 @@ export default function Navigate() {
         <div className="text-white text-base mt-4 font-medium">Loop in de richting van de pijl</div>
       </div>
     </div>
+  );
+}
+
+// Gebruik Suspense rond je content!
+export default function NavigatePage() {
+  return (
+    <Suspense fallback={<div className="text-center text-white p-12">Laden…</div>}>
+      <NavigateContent />
+    </Suspense>
   );
 }
