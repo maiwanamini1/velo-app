@@ -36,12 +36,14 @@ function NavigateContent() {
   const stationName = params.get("name") || "Onbekend station";
   const [distance, setDistance] = useState(null);
   const [bearing, setBearing] = useState(null);
+  const [deviceHeading, setDeviceHeading] = useState(0);
   const [imageError, setImageError] = useState(false);
 
   // Ref + state voor oranje lijn onder afstand
   const distanceRef = useRef(null);
   const [distanceWidth, setDistanceWidth] = useState(0);
 
+  // Geolocatie en bearing
   useEffect(() => {
     const watch = navigator.geolocation.watchPosition(
       (pos) => {
@@ -55,7 +57,29 @@ function NavigateContent() {
     return () => navigator.geolocation.clearWatch(watch);
   }, [destLat, destLng]);
 
-  // Meet breedte van afstandstekst na update
+  // DeviceOrientation ophalen
+  useEffect(() => {
+    function handleOrientation(event) {
+      let heading;
+      if (typeof event.webkitCompassHeading !== "undefined") {
+        // iOS
+        heading = event.webkitCompassHeading;
+      } else {
+        // Android/Chrome
+        heading = event.alpha;
+      }
+      setDeviceHeading(heading ?? 0);
+    }
+    window.addEventListener("deviceorientationabsolute", handleOrientation, true);
+    window.addEventListener("deviceorientation", handleOrientation, true);
+
+    return () => {
+      window.removeEventListener("deviceorientationabsolute", handleOrientation, true);
+      window.removeEventListener("deviceorientation", handleOrientation, true);
+    };
+  }, []);
+
+  // Breedte oranje lijn updaten
   useEffect(() => {
     if (distanceRef.current) {
       setDistanceWidth(distanceRef.current.offsetWidth);
@@ -63,6 +87,9 @@ function NavigateContent() {
   }, [distance]);
 
   const streetViewUrl = `https://maps.googleapis.com/maps/api/streetview?size=400x400&location=${destLat},${destLng}&key=${process.env.NEXT_PUBLIC_STREETVIEW_API_KEY}`;
+
+  // Rotatie voor de pijl: verschil tussen bearing en device heading
+  const arrowRotation = ((bearing ?? 0) - (deviceHeading ?? 0) + 360) % 360;
 
   return (
     <div className="min-h-screen bg-[#CF0039] flex flex-col items-center relative pt-0 px-6">
@@ -116,7 +143,7 @@ function NavigateContent() {
       <div className="flex flex-col items-center mt-6">
         <div className="rounded-full bg-white w-32 h-32 flex items-center justify-center shadow">
           <div
-            style={{ transform: `rotate(${bearing ?? 0}deg)`, transition: "0.3s" }}
+            style={{ transform: `rotate(${arrowRotation}deg)`, transition: "0.3s" }}
             className="flex items-center justify-center"
           >
             <svg width="84" height="84" viewBox="0 0 60 60">
